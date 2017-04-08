@@ -19,14 +19,12 @@ def confirmation(ros_image):
 
 	#creating a filter
 	#Position 0 is the lower limit and positon 1 the upper one
-	lower_red = np.array([169, 100, 100])
-	upper_red = np.array([189, 255, 255])
 	blue_threshold = np.array([[110,50,50],[130,255,255]])
 	red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
-	colors = {'Blue': blue_threshold, 'Red': red_threshold}
-	mask = cv2.inRange(inImg_hsv,colors['Red'][0],colors['Red'][1])
-	cv2.imshow('mask',mask)
-
+	green_threshold = np.array([[49,50,50],[80, 255, 255]])
+	colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
+	mask = cv2.inRange(inImg_hsv,colors['Green'][0],colors['Green'][1])
+	cv2.imshow("mask", mask)
 	#Noise elimination
 	moments = cv2.moments(mask)
 	area = moments['m00']
