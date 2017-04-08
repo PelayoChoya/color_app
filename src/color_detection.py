@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import random
 import sys
 import cv2
 from sensor_msgs.msg import Image, CameraInfo
@@ -10,30 +11,49 @@ import numpy as np
 
 def confirmation(ros_image):	
 	#convertion from ROS Image format to opencv
-	bridge = CvBridge()
-	inImg = bridge.imgmsg_to_cv2(ros_image,"bgr8")
+	# bridge = CvBridge()
+	# inImg = bridge.imgmsg_to_cv2(ros_image,"bgr8")
 
 	#convertion from rgb to hsv
-	inImg_hsv = cv2.cvtColor(inImg, cv2.COLOR_BGR2HSV)
-	cv2.imshow("camera", inImg_hsv)  
-
+	# inImg_hsv = cv2.cvtColor(inImg, cv2.COLOR_BGR2HSV)
+	# cv2.imshow("camera", inImg_hsv)  
+	
 	#creating a filter
 	#Position 0 is the lower limit and positon 1 the upper one
 	blue_threshold = np.array([[110,50,50],[130,255,255]])
 	red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
 	green_threshold = np.array([[49,50,50],[80, 255, 255]])
 	colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
-	
-	for color in colors:
-		mask = cv2.inRange(inImg_hsv,colors[color][0],colors[color][1])
+
+	#Random color election
+	election = random.choice(colors.keys())
+	print "Show me the " + election + " color"
+	success = 0
+	#the loop while finnish once the card with that color is shown
+	while success != 1:
+		bridge = CvBridge()
+		inImg = bridge.imgmsg_to_cv2(ros_image,"bgr8")
+		inImg_hsv = cv2.cvtColor(inImg, cv2.COLOR_BGR2HSV)
+		cv2.imshow("camera", inImg_hsv) 
+		cv2.waitKey(1)
+		mask = cv2.inRange(inImg_hsv,colors[election][0],colors[election][1])
+		
 		moments = cv2.moments(mask)
 		area = moments['m00']
-		#if area > 2000000:
-			#print color + " detected"
-		#else:
-			#print "nothing detected"
-	cv2.waitKey(1)
-	return colors
+		if area > 2000000:
+			print "yes"
+			success = 0
+		
+	# for color in colors:
+	# 	mask = cv2.inRange(inImg_hsv,colors[color][0],colors[color][1])
+	# 	moments = cv2.moments(mask)
+	# 	area = moments['m00']
+	# 	#if area > 2000000:
+	# 		#print color + " detected"
+	# 	#else:
+	# 		#print "nothing detected"
+	#cv2.waitKey(1)
+	
 	#appliying the filter
 	# # mask = cv2.inRange(inImg_hsv,colors['Green'][0],colors['Green'][1])
 	# cv2.imshow("mask", mask)
