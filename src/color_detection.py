@@ -23,27 +23,40 @@ def confirmation(ros_image):
 	red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
 	green_threshold = np.array([[49,50,50],[80, 255, 255]])
 	colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
-	mask = cv2.inRange(inImg_hsv,colors['Green'][0],colors['Green'][1])
-	cv2.imshow("mask", mask)
-	#Noise elimination
-	moments = cv2.moments(mask)
-	area = moments['m00']
-	if (area > 200000):
-		#Looking for the centers
-		x = int(moments['m10']/moments['m00'])
-   		y = int(moments['m01']/moments['m00'])	
+	
+	for color in colors:
+		mask = cv2.inRange(inImg_hsv,colors[color][0],colors[color][1])
+		moments = cv2.moments(mask)
+		area = moments['m00']
+		#if area > 2000000:
+			#print color + " detected"
+		#else:
+			#print "nothing detected"
+	cv2.waitKey(1)
+	return colors
+	#appliying the filter
+	# # mask = cv2.inRange(inImg_hsv,colors['Green'][0],colors['Green'][1])
+	# cv2.imshow("mask", mask)
 
-   		#Center drawing
-   		cv2.rectangle(inImg, (x, y), (x+2, y+2),(0,0,255), 2)
-   		cv2.imshow('final',inImg)
-    	#displaying the images
-        cv2.waitKey(1)
+	# #Noise elimination
+	# moments = cv2.moments(mask)
+	# area = moments['m00']
+	# if (area > 200000):
+	# 	#Looking for the centers
+	# 	x = int(moments['m10']/moments['m00'])
+ #   		y = int(moments['m01']/moments['m00'])	
+
+ #   		#Center drawing
+ #   		cv2.rectangle(inImg, (x, y), (x+2, y+2),(0,0,255), 2)
+ #   		cv2.imshow('final',inImg)
+ #    	#displaying the images
+ #        cv2.waitKey(1)
 
 def  color_detection():
 	rospy.init_node('color_reciever', anonymous = 'True' )
 	rospy.Subscriber("/camera/rgb/image_color", Image, confirmation)
 	rospy.spin()
-
+	
 if __name__ == '__main__':
     color_detection()
 	
