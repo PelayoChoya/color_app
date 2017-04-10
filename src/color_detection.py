@@ -10,10 +10,10 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np 
 class color_detector:
 
-	def __init__(self, choice):
+	def __init__(self):
 		self.bridge = CvBridge()
 		self.success = False
-		self.election = choice
+		self.election = ''
 		#creating a filter
 		#Position 0 is the lower limit and positon 1 the upper one
 		blue_threshold = np.array([[110,50,50],[130,255,255]])
@@ -21,6 +21,12 @@ class color_detector:
 		green_threshold = np.array([[49,50,50],[80, 255, 255]])
 		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
 		self.image_sub = rospy.Subscriber("/camera/rgb/image_color", Image, self.confirmation)
+
+	def set_random_color(self):
+		self.election = random.choice(self.colors.keys())
+
+	def reset_parameters(self):
+		self.success = False
 
 	def confirmation(self,ros_image):	
 		#convertion from ROS Image format to opencv
@@ -58,19 +64,17 @@ class color_detector:
 
 def  color_detection():
 
-	#Random color election
-	variety = ['Blue', 'Red', 'Green']
-	election = random.choice(variety)
-	print "Show me the " + election + " color"
-	cd = color_detector(election)
-
+	cd = color_detector()
+	cd.set_random_color()
 	
-	print cd.election
-	print cd.colors[cd.election]
 	rospy.init_node('color_reciever', anonymous = 'True' )
-	while cd.success == False:
-		pass
-	print "exited"
+	while not rospy.is_shutdown():
+		print  "Show me the " + cd.election + "Color"
+		while (cd.success == False and not rospy.is_shutdown()):
+			pass
+		print "exited"
+		cd.reset_parameters()
+		cd.set_random_color()
 	rospy.spin()
 	cv2.destroyAllWindows()
 
