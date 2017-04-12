@@ -36,11 +36,6 @@ class color_shape_detector:
 	def confirmation(self,ros_image):	
 		#convertion from ROS Image format to opencv
 		inImg = self.bridge.imgmsg_to_cv2(ros_image,"bgr8")
-		
-		#grayscale image for shape detection, blurring
-		inImg_gray = cv2.cvtColor(inImg, cv2.COLOR_BGR2GRAY)
-		inImg_blurred = cv2.GaussianBlur(inImg_gray, (5, 5), 0)
-		ret,thresh = cv2.threshold(inImg_gray,127,255,1)
 
 		#convertion from rgb to hsv
 		inImg_hsv = cv2.cvtColor(inImg, cv2.COLOR_BGR2HSV)
@@ -55,7 +50,8 @@ class color_shape_detector:
 		 	self.success_color = True
 		
 		#appliying the shape filter
-		ret,thresh_shape = cv2.threshold(inImg_gray,127,255,1)
+		#ret,thresh_shape = cv2.threshold(inImg_gray,127,255,1)
+		ret,thresh_shape = cv2.threshold(mask,127,255,1)
 		contours,h = cv2.findContours(thresh_shape,1,2)
 
 		for cnt in contours:
