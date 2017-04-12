@@ -8,46 +8,61 @@ from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np 
-class color_detector:
+class color_shape_detector:
 
 	def __init__(self):
 		self.bridge = CvBridge()
-		self.success = False
-		self.election = ''
+		self.success_color = False
+		self.success_shape = False
+		self.election_color = ''
+		self.election_shape = ''
 		#creating a filter
 		#Position 0 is the lower limit and positon 1 the upper one
-		blue_threshold = np.array([[110,50,50],[130,255,255]])
+		blue_threshold = np.array([[103,50,50],[130,255,255]])
 		red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
 		green_threshold = np.array([[49,50,50],[80, 255, 255]])
 		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
+		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
 		self.image_sub = rospy.Subscriber("/camera/rgb/image_color", Image, self.confirmation)
 
-	def set_random_color(self):
-		self.election = random.choice(self.colors.keys())
+	def set_random_parameters(self):
+		self.election_color = random.choice(self.colors.keys())
+		self.election_shape = random.choice(self.shapes.keys())
 
 	def reset_parameters(self):
-		self.success = False
+		self.success_color = False
+		self.success_shape = False
 
 	def confirmation(self,ros_image):	
 		#convertion from ROS Image format to opencv
 		inImg = self.bridge.imgmsg_to_cv2(ros_image,"bgr8")
-		cv2.imshow("Raw", inImg)
 		
+		#grayscale image for shape detection, blurring
+		inImg_gray = cv2.cvtColor(inImg, cv2.COLOR_BGR2GRAY)
+		inImg_blurred = cv2.GaussianBlur(inImg_gray, (5, 5), 0)
+		ret,thresh = cv2.threshold(inImg_gray,127,255,1)
 
 		#convertion from rgb to hsv
 		inImg_hsv = cv2.cvtColor(inImg, cv2.COLOR_BGR2HSV)
-		cv2.imshow("camera", inImg_hsv)  
 
-		#appliying the filter
-		mask = cv2.inRange(inImg_hsv,self.colors[self.election][0],self.colors[self.election][1])
+		#appliying the color filter
+		mask = cv2.inRange(inImg_hsv,self.colors[self.election_color][0],self.colors[self.election_color][1])
 		cv2.imshow("mask", mask)
 		cv2.waitKey(1)
 		moments = cv2.moments(mask)
 		area = moments['m00']
 		if area > 2000000:
-		 	self.success = True
-		# 		print "yes"
+		 	self.success_color = True
 		
+		#appliying the shape filter
+		ret,thresh_shape = cv2.threshold(inImg_gray,127,255,1)
+		contours,h = cv2.findContours(thresh_shape,1,2)
+
+		for cnt in contours:
+			approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
+    		if len(approx) == self.shapes[self.election_shape]:
+    			self.success_shape = True
+    			print "ok"
 		# #Noise elimination
 		# moments = cv2.moments(mask)
 		# area = moments['m00']
@@ -64,17 +79,17 @@ class color_detector:
 
 def  color_detection():
 
-	cd = color_detector()
-	cd.set_random_color()
+	cd = color_shape_detector()
+	cd.set_random_parameters()
 	
 	rospy.init_node('color_reciever', anonymous = 'True' )
 	while not rospy.is_shutdown():
-		print  "Show me the " + cd.election + "Color"
-		while (cd.success == False and not rospy.is_shutdown()):
+		print  "Show me the " +  cd.election_color  + " " + cd.election_shape 
+		while (cd.success_color == False and cd.success_shape == False and not rospy.is_shutdown()):
 			pass
 		print "exited"
 		cd.reset_parameters()
-		cd.set_random_color()
+		cd.set_random_parameters()
 	rospy.spin()
 	cv2.destroyAllWindows()
 
