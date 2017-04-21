@@ -18,8 +18,8 @@
   <arg name="mode"              default="manual" />
   <arg name="depth_width"       default="640" />
   <arg name="depth_height"      default="480" />
-  <arg name="color_width"       default="1280" />
-  <arg name="color_height"      default="720" />
+  <arg name="color_width"       default="640" />
+  <arg name="color_height"      default="480" />
   <arg name="depth_fps"         default="10" />
   <arg name="color_fps"         default="10" />
 
@@ -41,7 +41,6 @@
 
   <group ns="$(arg camera)">
     <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
-
     <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
       <arg name="manager"      value="$(arg manager)" />
       <arg name="camera"       value="$(arg camera)" />
@@ -50,4 +49,11 @@
       <arg name="usb_port_id"  value="$(arg usb_port_id)" />
     </include>
   </group>
+  <node 
+    pkg="color_app"
+    type="color_detection.py"
+    name="color_shape"
+    output="screen"
+  />
+
 </launch>
