@@ -49,10 +49,5 @@
       <arg name="usb_port_id"  value="$(arg usb_port_id)" />
     </include>
   </group>
-  <node 
-    pkg="color_app"
-    type="color_detection.py"
-    name="color_shape"
-    output="screen"
-  />
+
 </launch>
