@@ -23,7 +23,7 @@ class color_shape_detector:
 		green_threshold = np.array([[49,50,50],[80, 255, 255]])
 		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
 		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
-		self.image_sub = rospy.Subscriber("/camera/rgb/image_color", Image, self.confirmation)
+		self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.confirmation)
 
 	def set_random_parameters(self):
 		self.election_color = random.choice(self.colors.keys())
@@ -86,9 +86,9 @@ def  color_detection():
 		print "exited"
 		cd.reset_parameters()
 		cd.set_random_parameters()
-	rospy.spin()
 	cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     color_detection()
+    rospy.spin()
 	
