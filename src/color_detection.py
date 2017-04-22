@@ -34,24 +34,31 @@ class color_shape_detector:
 		self.success_shape = False
 
 	def confirmation(self,ros_image):	
-		#convertion from ROS Image format to opencv
+		#convertion from ROS Image format to opencv and filtering
 		inImg = self.bridge.imgmsg_to_cv2(ros_image,"bgr8")
-
+		inImg_filtered = cv2.GaussianBlur(inImg, (5,5),0)
+		
 		#convertion from rgb to hsv
-		inImg_hsv = cv2.cvtColor(inImg, cv2.COLOR_BGR2HSV)
+		inImg_hsv = cv2.cvtColor(inImg_filtered, cv2.COLOR_BGR2HSV)
 
 		#appliying the color filter
 		mask = cv2.inRange(inImg_hsv,self.colors[self.election_color][0],self.colors[self.election_color][1])
 		cv2.imshow("mask", mask)
 		cv2.waitKey(1)
-		moments = cv2.moments(mask)
+
+		#morphological transformation
+		kernel = np.ones((5,5),np.uint8)
+		mask_op = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+		mask_op_cl = cv2.morphologyEx(mask_op, cv2.MORPH_CLOSE,kernel)
+		cv2.imshow("mask opening closing", mask_op_cl)
+		moments = cv2.moments(mask_op_cl)
 		area = moments['m00']
 		if area > 2000000:
 		 	self.success_color = True
 		
 		#appliying the shape filter
 		#ret,thresh_shape = cv2.threshold(inImg_gray,127,255,1)
-		ret,thresh_shape = cv2.threshold(mask,127,255,1)
+		ret,thresh_shape = cv2.threshold(mask_op_cl,127,255,1)
 		contours,h = cv2.findContours(thresh_shape,1,2)
 
 		for cnt in contours:
