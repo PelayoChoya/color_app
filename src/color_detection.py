@@ -58,14 +58,18 @@ class color_shape_detector:
 		 	self.success_color = True
 		
 		#appliying the shape filter
-		ret,thresh_shape = cv2.threshold(mask_op_cl,127,255,1)
-		contours,h = cv2.findContours(thresh_shape,1,2)
-
-		for cnt in contours:
-			approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
-    		if len(approx) == self.shapes[self.election_shape]:
-    			self.success_shape = True
-    			print "ok"
+		if(self.election_shape == 'Circle') :
+			circles = cv2.HoughCircles(mask_op_cl,cv2.cv.CV_HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=100,maxRadius=0)
+			if circles is not None:
+				self.success_shape = True
+		else :
+			ret,thresh_shape = cv2.threshold(mask_op_cl,127,255,1)
+			contours,h = cv2.findContours(thresh_shape,1,2)
+			for cnt in contours:
+				approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
+	    		if len(approx) == self.shapes[self.election_shape]:
+	    			self.success_shape = True
+	    			print "ok"
 
 def  color_detection():
 
