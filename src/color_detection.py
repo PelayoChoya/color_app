@@ -16,6 +16,7 @@ class color_shape_detector:
 		self.success_shape = False
 		self.election_color = ''
 		self.election_shape = ''
+
 		#creating a filter
 		#Position 0 is the lower limit and positon 1 the upper one
 		blue_threshold = np.array([[103,50,50],[130,255,255]])
@@ -57,7 +58,6 @@ class color_shape_detector:
 		 	self.success_color = True
 		
 		#appliying the shape filter
-		#ret,thresh_shape = cv2.threshold(inImg_gray,127,255,1)
 		ret,thresh_shape = cv2.threshold(mask_op_cl,127,255,1)
 		contours,h = cv2.findContours(thresh_shape,1,2)
 
@@ -66,19 +66,6 @@ class color_shape_detector:
     		if len(approx) == self.shapes[self.election_shape]:
     			self.success_shape = True
     			print "ok"
-		# #Noise elimination
-		# moments = cv2.moments(mask)
-		# area = moments['m00']
-		# if (area > 200000):
-		# 	#Looking for the centers
-		# 	x = int(moments['m10']/moments['m00'])
-	 #   		y = int(moments['m01']/moments['m00'])	
-
-	 #   		#Center drawing
-	 #   		cv2.rectangle(inImg, (x, y), (x+2, y+2),(0,0,255), 2)
-	 #   		cv2.imshow('final',inImg)
-	 #    	#displaying the images
-	 #        cv2.waitKey(1)
 
 def  color_detection():
 
