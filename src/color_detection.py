@@ -45,52 +45,56 @@ class color_shape_detector:
 		#appliying the color filter
 		mask = cv2.inRange(inImg_hsv,self.colors[self.election_color][0],self.colors[self.election_color][1])
 		cv2.imshow("mask", mask)
-		cv2.waitKey(1)
+		#cv2.waitKey(1)
 
 		#morphological transformation
 		kernel = np.ones((7,7),np.uint8)
 		mask_op = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 		mask_op_cl = cv2.morphologyEx(mask_op, cv2.MORPH_CLOSE,kernel)
-		cv2.imshow("mask opening closing", mask_op_cl)
+		#cv2.imshow("mask opening closing", mask_op_cl)
 
 
 		#removing the small objects from the binary image
 		contours,h = cv2.findContours(mask_op_cl,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 		mask_hue = np.ones(mask_op_cl.shape[:2], dtype="uint8") * 255
-		cv2.imshow("middle step", mask_hue)
+		#cv2.imshow("middle step", mask_hue)
 		area_ev = 0
 		iterator = 0
 		biggest_area_index = 0
-		for cnt in contours:
-			area = cv2.contourArea(cnt)
-			if (area > area_ev):
-				area_ev = area
-				biggest_area_index = iterator
-			iterator = iterator + 1
-		cnt = contours[biggest_area_index]
-		cv2.drawContours(mask_hue, [cnt], -1, 0, -1)
-		cv2.bitwise_not(mask_hue,mask_hue)
-		cv2.imshow("hue", mask_hue)
-
-		#check if the color filer succeed
-		if area_ev > 20000:
-		 	self.success_color = True
 		
-		#appliying the shape filter
-		if(self.election_shape == 'Circle') :
-			circles = cv2.HoughCircles(mask_hue,cv2.cv.CV_HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=100,maxRadius=0)
-			if circles is not None:
-				self.success_shape = True
-		else :
-			approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
-	    	if len(approx) == self.shapes[self.election_shape]:
-	    		self.success_shape = True
+		if contours:
+			
+			for cnt in contours:
+				area = cv2.contourArea(cnt)
+				if (area > area_ev):
+					area_ev = area
+					biggest_area_index = iterator
+				iterator = iterator + 1
 
+			cnt =  contours[biggest_area_index]
+			cv2.drawContours(mask_hue, [cnt], -1, 0, -1)
+			cv2.bitwise_not(mask_hue,mask_hue)
+			cv2.imshow("hue", mask_hue)
+
+			#check if the color filer succeed
+			if area_ev > 20000:
+			 	self.success_color = True
+			
+			#appliying the shape filter
+			if(self.election_shape == 'Circle') :
+				circles = cv2.HoughCircles(mask_hue,cv2.cv.CV_HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=100,maxRadius=0)
+				if circles is not None:
+					self.success_shape = True
+			else :
+				approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
+		    	if len(approx) == self.shapes[self.election_shape]:
+		    		self.success_shape = True
+		else:
+			pass
 def  color_detection():
 
 	cd = color_shape_detector()
 	cd.set_random_parameters()
-	
 	rospy.init_node('color_reciever', anonymous = 'True' )
 	while not rospy.is_shutdown():
 		print  "Show me the " +  cd.election_color  + " " + cd.election_shape 
