@@ -22,7 +22,8 @@ class color_shape_detector:
 		blue_threshold = np.array([[103,50,50],[130,255,255]])
 		red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
 		green_threshold = np.array([[49,50,50],[80, 255, 255]])
-		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold}
+		yellow_threshold = np.array([[25,100,100],[35,255,255]])
+		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold, 'Yellow' : yellow_threshold}
 		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
 		self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.confirmation)
 
