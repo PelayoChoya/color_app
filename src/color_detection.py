@@ -26,6 +26,10 @@ class color_shape_detector:
 		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
 		self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.confirmation)
 
+		#creating image kernels for morphological operations
+		self.kernel_op = np.ones((3,3),np.uint8)
+		self.kernel_cl = np.ones((9,9),np.uint8)
+
 	def set_random_parameters(self):
 		self.election_color = random.choice(self.colors.keys())
 		self.election_shape = random.choice(self.shapes.keys())
@@ -44,20 +48,20 @@ class color_shape_detector:
 
 		#appliying the color filter
 		mask = cv2.inRange(inImg_hsv,self.colors[self.election_color][0],self.colors[self.election_color][1])
-		#cv2.imshow("mask", mask)
+		cv2.imshow("mask", mask)
 		#cv2.waitKey(1)
 
 		#morphological transformation
-		kernel = np.ones((7,7),np.uint8)
-		mask_op = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-		mask_op_cl = cv2.morphologyEx(mask_op, cv2.MORPH_CLOSE,kernel)
+		#kernel = np.ones((7,7),np.uint8)
+		mask_op = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel_op)
+		mask_op_cl = cv2.morphologyEx(mask_op, cv2.MORPH_CLOSE, self.kernel_cl)
 		#cv2.imshow("mask opening closing", mask_op_cl)
 
 
 		#removing the small objects from the binary image
 		contours,h = cv2.findContours(mask_op_cl,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-		mask_hue = np.ones(mask_op_cl.shape[:2], dtype="uint8") * 255
-		#cv2.imshow("middle step", mask_hue)
+		mask_final = np.ones(mask_op_cl.shape[:2], dtype="uint8") * 255
+		#cv2.imshow("middle step", mask_final)
 		area_ev = 0
 		iterator = 0
 		biggest_area_index = 0
@@ -72,9 +76,9 @@ class color_shape_detector:
 				iterator = iterator + 1
 
 			cnt =  contours[biggest_area_index]
-			cv2.drawContours(mask_hue, [cnt], -1, 0, -1)
-			cv2.bitwise_not(mask_hue,mask_hue)
-			cv2.imshow("hue", mask_hue)
+			cv2.drawContours(mask_final, [cnt], -1, 0, -1)
+			cv2.bitwise_not(mask_final,mask_final)
+			cv2.imshow("hue", mask_final)
 			cv2.waitKey(1)
 			#check if the color filer succeed
 			if area_ev > 20000:
@@ -82,7 +86,7 @@ class color_shape_detector:
 			
 			#appliying the shape filter
 			if(self.election_shape == 'Circle') :
-				circles = cv2.HoughCircles(mask_hue,cv2.cv.CV_HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=100,maxRadius=0)
+				circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=100,maxRadius=0)
 				if circles is not None:
 					self.success_shape = True
 			else :
