@@ -86,7 +86,7 @@ class color_shape_detector:
 				if circles is not None:
 					self.success_shape = True
 			else :
-				YE=2
+				pass
 		    	if len(cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)) == self.shapes[self.election_shape]:
 		    		self.success_shape = True
 		else:
