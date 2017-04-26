@@ -44,7 +44,7 @@ class color_shape_detector:
 
 		#appliying the color filter
 		mask = cv2.inRange(inImg_hsv,self.colors[self.election_color][0],self.colors[self.election_color][1])
-		cv2.imshow("mask", mask)
+		#cv2.imshow("mask", mask)
 		#cv2.waitKey(1)
 
 		#morphological transformation
@@ -75,7 +75,7 @@ class color_shape_detector:
 			cv2.drawContours(mask_hue, [cnt], -1, 0, -1)
 			cv2.bitwise_not(mask_hue,mask_hue)
 			cv2.imshow("hue", mask_hue)
-
+			cv2.waitKey(1)
 			#check if the color filer succeed
 			if area_ev > 20000:
 			 	self.success_color = True
@@ -86,8 +86,8 @@ class color_shape_detector:
 				if circles is not None:
 					self.success_shape = True
 			else :
-				approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
-		    	if len(approx) == self.shapes[self.election_shape]:
+				YE=2
+		    	if len(cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)) == self.shapes[self.election_shape]:
 		    		self.success_shape = True
 		else:
 			pass
