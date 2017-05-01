@@ -8,6 +8,8 @@ from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np 
+import message_filters
+
 class color_shape_detector:
 
 	def __init__(self):
@@ -23,9 +25,15 @@ class color_shape_detector:
 		red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
 		green_threshold = np.array([[49,50,50],[80, 255, 255]])
 		yellow_threshold = np.array([[25,100,100],[35,255,255]])
-		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold, 'Yellow' : yellow_threshold}
+		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold} # 'Yellow' : yellow_threshold}
 		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
-		self.image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.confirmation)
+		
+		#creating a message filter for synchronizing depth an color info
+		self.image_sub = message_filters.Subscriber("/camera/color/image_raw", Image)
+		self.depth_sub = message_filters.Subscriber("/camera/depth/image_raw", Image)
+		tss = message_filters.TimeSynchronizer([self.image_sub, self.depth_sub],10)
+		tss.registerCallback(self.callback)
+
 
 		#creating image kernels for morphological operations
 		self.kernel_op = np.ones((3,3),np.uint8)
@@ -39,9 +47,9 @@ class color_shape_detector:
 		self.success_color = False
 		self.success_shape = False
 
-	def confirmation(self,ros_image):	
+	def callback(self,ros_color, ros_depth):	
 		#convertion from ROS Image format to opencv and filtering
-		inImg = self.bridge.imgmsg_to_cv2(ros_image,"bgr8")
+		inImg = self.bridge.imgmsg_to_cv2(ros_color,"bgr8")
 		inImg_filtered = cv2.GaussianBlur(inImg, (5,5),0)
 		
 		#convertion from rgb to hsv
@@ -96,6 +104,8 @@ class color_shape_detector:
 		    		self.success_shape = True
 		else:
 			pass
+
+
 def  color_detection():
 
 	cd = color_shape_detector()
