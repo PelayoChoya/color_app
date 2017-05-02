@@ -51,17 +51,25 @@ class color_shape_detector:
 		#convertion from ROS Image format to opencv and filtering
 		inImg = self.bridge.imgmsg_to_cv2(ros_color,"bgr8")
 		#depth encoding is "16UC1" rostopic echo /camera/depth/image_raw --noarr shows this encoding
-
- 
 		inDepth = self.bridge.imgmsg_to_cv2(ros_depth, "16UC1")
 		inImg_filtered = cv2.GaussianBlur(inImg, (5,5),0)
 
+		#get a Matrix where 0s are the values not included in the range and 1s the included ones
+		minval =  np.min(inDepth[np.nonzero(inDepth)])
+		maxval = minval + 500
+		np.place(inDepth, inDepth > maxval, 0)
+		np.place(inDepth, inDepth > 0, 1)
+		
 
 		#convertion from rgb to hsv
 		inImg_hsv = cv2.cvtColor(inImg_filtered, cv2.COLOR_BGR2HSV)
 
+		#apply the depth mask
+		depth_mask_applied = np.multiply(inImg_hsv, inDepth)
+
+
 		#appliying the color filter
-		mask = cv2.inRange(inImg_hsv,self.colors[self.election_color][0],self.colors[self.election_color][1])
+		mask = cv2.inRange(depth_mask_applied,self.colors[self.election_color][0],self.colors[self.election_color][1])
 		cv2.imshow("mask", mask)
 
 
