@@ -25,7 +25,12 @@ class color_shape_detector:
 		red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
 		green_threshold = np.array([[49,50,50],[80, 255, 255]])
 		yellow_threshold = np.array([[25,100,100],[35,255,255]])
-		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold} # 'Yellow' : yellow_threshold}
+		#black_threshold = np.array([[0,0,0],[230,25,20]])
+		#gray_threshold = np.array([[190,45,35],[220,65,55]])
+		orange_threshold = np.array([[15,65,55],[35,85,75]])
+		#pink_threshold = np.array([[290,45,40],[330,85,80]])
+		#purple_threshold = np.array([[200,45,40],[240,90,80]])
+		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold, } # 'Orange': orange_threshold, 'Yellow' : yellow_threshold}
 		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
 		
 		#creating a message filter for synchronizing depth an color info
@@ -55,8 +60,8 @@ class color_shape_detector:
 		inImg_filtered = cv2.GaussianBlur(inImg, (5,5),0)
 
 		#get a Matrix where 0s are the values not included in the range and 1s the included ones
-		minval =  np.min(inDepth[np.nonzero(inDepth)])
-		maxval = minval + 500
+		minval =  np.min(inDepth[np.nonzero(inDepth)]) - 25
+		maxval = minval + 100
 		np.place(inDepth, inDepth > maxval, 0)
 		np.place(inDepth, inDepth > 0, 1)
 		
@@ -101,7 +106,6 @@ class color_shape_detector:
 			cv2.drawContours(mask_final, [cnt], -1, 0, -1)
 			cv2.bitwise_not(mask_final,mask_final)
 			cv2.imshow("hue", mask_final)
-			cv2.waitKey(1)
 			#check if the color filer succeed
 			if area_ev > 20000:
 			 	self.success_color = True
@@ -117,7 +121,7 @@ class color_shape_detector:
 		    		self.success_shape = True
 		else:
 			pass
-
+		cv2.waitKey(1)
 
 def  color_detection():
 
