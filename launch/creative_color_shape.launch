@@ -51,7 +51,7 @@
   </group>
   <node 
     pkg="color_app"
-    type="color_detection.py"
+    type="detection.py"
     name="color_shape"
     output="screen"
   />
