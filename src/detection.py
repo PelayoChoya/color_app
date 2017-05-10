@@ -32,7 +32,7 @@ class color_shape_detector:
 		#pink_threshold = np.array([[290,45,40],[330,85,80]])
 		#purple_threshold = np.array([[200,45,40],[240,90,80]])
 		self.colors = {'Blue': blue_threshold, 'Red': red_threshold, 'Green': green_threshold, } # 'Orange': orange_threshold, 'Yellow' : yellow_threshold}
-		self.shapes = {'Triangle' : 3, 'Square' : 4, "Circle" : 15}
+		self.shapes = {'Triangle' : 3, 'Square' : 4, 'Circle' : 15}
 		
 		#creating a message filter for synchronizing depth an color info
 		self.image_sub = message_filters.Subscriber("/camera/color/image_raw", Image)
@@ -46,7 +46,7 @@ class color_shape_detector:
 		self.kernel_cl = np.ones((9,9),np.uint8)
 
 	def callback(self,ros_color, ros_depth):
-
+		ra = rospy.Rate(10) #10hz
 		for color in self.colors:
 
 			#convertion from ROS Image format to opencv and filtering
@@ -119,7 +119,7 @@ class color_shape_detector:
 					pass
 
 			cv2.waitKey(1)
-			
+			ra.sleep()
 
 def  color_detection():
 
@@ -128,7 +128,7 @@ def  color_detection():
 
 	#ros node defined
 	pub = rospy.Publisher('detected_parameters', CreativeCognitionParameters, queue_size = 10)
-	rospy.init_node('color_reciever', anonymous = 'True' )
+	rospy.init_node('color_reciever', anonymous = True )
 	r = rospy.Rate(10) #10hz
 	msg = CreativeCognitionParameters()	
 	while not rospy.is_shutdown() :
