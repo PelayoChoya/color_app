@@ -9,6 +9,7 @@ from std_msgs.msg import Int32, String
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np 
 import message_filters
+from color_app.msg import CreativeCognitionParameters
 
 class color_shape_detector:
 
@@ -44,11 +45,10 @@ class color_shape_detector:
 		self.kernel_op = np.ones((3,3),np.uint8)
 		self.kernel_cl = np.ones((9,9),np.uint8)
 
-
-
 	def callback(self,ros_color, ros_depth):
 
-		for color in self.colors:	
+		for color in self.colors:
+
 			#convertion from ROS Image format to opencv and filtering
 			inImg = self.bridge.imgmsg_to_cv2(ros_color,"bgr8")
 			#depth encoding is "16UC1" rostopic echo /camera/depth/image_raw --noarr shows this encoding
@@ -117,14 +117,27 @@ class color_shape_detector:
 				    		self.detected_shape = shape
 				else:
 					pass
+
 			cv2.waitKey(1)
+			
 
 def  color_detection():
 
+	#class definition
 	cd = color_shape_detector()
+
+	#ros node defined
+	pub = rospy.Publisher('detected_parameters', CreativeCognitionParameters, queue_size = 10)
 	rospy.init_node('color_reciever', anonymous = 'True' )
+	r = rospy.Rate(10) #10hz
+	msg = CreativeCognitionParameters()	
 	while not rospy.is_shutdown() :
 		print  "Detected " + cd.detected_color + " , " + cd.detected_shape
+		msg.Color = cd.detected_color
+  		msg.Shape = cd.detected_shape
+  		pub.publish(msg)
+  		r.sleep()
+
 	cv2.destroyAllWindows()
 
 if __name__ == '__main__':
