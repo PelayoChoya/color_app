@@ -47,6 +47,7 @@ class color_shape_detector:
 
 	def callback(self,ros_color, ros_depth):
 		ra = rospy.Rate(10) #10hz
+
 		for color in self.colors:
 
 			#convertion from ROS Image format to opencv and filtering
@@ -105,21 +106,31 @@ class color_shape_detector:
 				#check if the color filer succeed
 				if area_ev > 20000:
 				 	self.detected_color = color
+				 	self.success_color = True
+				elif area_ev < 20000 and not self.success_color:
+				 	self.detected_color = 'None'			
 				for shape in self.shapes:
 					#appliying the shape filter
 					if(shape == 'Circle') :
 						circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=100,maxRadius=0)
 						if circles is not None:
 							self.detected_shape = shape
+							self.success_shape = True
+						elif circles is None and not self.success_shape:
+							self.detected_shape = 'None'
 					else :
 						pass
 				    	if len(cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)) == self.shapes[shape]:
 				    		self.detected_shape = shape
+				    		self.success_shape = True
+				    	elif not len(cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)) == self.shapes[shape] and not self.success_shape:
+				    		self.detected_shape = 'None'
 				else:
 					pass
-
+				self.success_shape = False
 			cv2.waitKey(1)
 			ra.sleep()
+		self.success_color = False
 
 def  color_detection():
 
