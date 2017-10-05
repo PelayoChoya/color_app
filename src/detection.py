@@ -35,8 +35,8 @@ class color_shape_detector:
 		self.shapes = {'Triangle' : 3, 'Square' : 4, 'Circle' : 15}
 		
 		#creating a message filter for synchronizing depth an color info
-		self.image_sub = message_filters.Subscriber("/camera/color/image_raw", Image)
-		self.depth_sub = message_filters.Subscriber("/camera/depth/image_raw", Image)
+		self.image_sub = message_filters.Subscriber("/softkinetic_camera/rgb/image_color", Image)
+		self.depth_sub = message_filters.Subscriber("/softkinetic_camera/depth/image_raw", Image)
 		tss = message_filters.TimeSynchronizer([self.image_sub, self.depth_sub],10)
 		tss.registerCallback(self.callback)
 
