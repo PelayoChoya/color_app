@@ -46,7 +46,6 @@ class color_shape_detector:
         self.image_size = (320,240)
 
     def image_callback(self, image):
-        print "image data"
         #convertion from ROS Image format to opencv and filtering
         inImg = self.bridge.imgmsg_to_cv2(image,"bgr8")
         inImg_resized = cv2.resize(inImg, self.image_size, interpolation = cv2.INTER_AREA)
@@ -54,7 +53,6 @@ class color_shape_detector:
         self.image = inImg_resized
 
     def main_callback(self, ros_depth):
-        print "callback"
         ra = rospy.Rate(25) #25hz
 
         for color in self.colors:
@@ -112,11 +110,11 @@ class color_shape_detector:
                 cv2.bitwise_not(mask_final,mask_final)
                 cv2.imshow("hue", mask_final)
                 #check if the color filer succeed
-                if area_ev > 20000:
+                if area_ev > 50:
                     self.detected_color = color
                     self.success_color = True
-                elif area_ev < 20000 and not self.success_color:
-                    self.detected_color = 'None'			
+                elif area_ev < 50 and not self.success_color:
+                    self.detected_color = 'None'
                     for shape in self.shapes:
                         #appliying the shape filter
                         if(shape == 'Circle') :
