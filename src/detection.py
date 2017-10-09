@@ -7,7 +7,7 @@ import cv2
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32, String
 from cv_bridge import CvBridge, CvBridgeError
-import numpy as np 
+import numpy as np
 import message_filters
 from color_app.msg import CreativeCognitionParameters
 
@@ -35,33 +35,40 @@ class color_shape_detector:
         self.shapes = {'Triangle' : 3, 'Square' : 4, 'Circle' : 15}
 
         #creating a message filter for synchronizing depth an color info
-        self.image_sub = message_filters.Subscriber("/softkinetic_camera/rgb/image_color", Image)
-        self.depth_sub = message_filters.Subscriber("/softkinetic_camera/depth/image_raw", Image)
-        tss = message_filters.TimeSynchronizer([self.image_sub, self.depth_sub],25)
-        tss.registerCallback(self.callback)
-
+        self.image_sub = rospy.Subscriber("/softkinetic_camera/rgb/image_color", Image, self.image_callback)
+        self.depth_sub = rospy.Subscriber("/softkinetic_camera/depth/image_raw", Image, self.main_callback)
 
         #creating image kernels for morphological operations
         self.kernel_op = np.ones((3,3),np.uint8)
         self.kernel_cl = np.ones((9,9),np.uint8)
 
-    def callback(self,ros_color, ros_depth):
+        # image size
+        self.image_size = (320,240)
+
+    def image_callback(self, image):
+        print "image data"
+        #convertion from ROS Image format to opencv and filtering
+        inImg = self.bridge.imgmsg_to_cv2(image,"bgr8")
+        inImg_resized = cv2.resize(inImg, self.image_size, interpolation = cv2.INTER_AREA)
+
+        self.image = inImg_resized
+
+    def main_callback(self, ros_depth):
         print "callback"
         ra = rospy.Rate(25) #25hz
 
         for color in self.colors:
 
-            #convertion from ROS Image format to opencv and filtering
-            inImg = self.bridge.imgmsg_to_cv2(ros_color,"bgr8")
             #depth encoding is "16UC1" rostopic echo /camera/depth/image_raw --noarr shows this encoding
             inDepth = self.bridge.imgmsg_to_cv2(ros_depth, "16UC1")
-            inImg_filtered = cv2.GaussianBlur(inImg, (5,5),0)
+            inImg_filtered = cv2.GaussianBlur(self.image, (5,5),0)
 
             #get a Matrix where 0s are the values not included in the range and 1s the included ones
-            minval =  np.min(inDepth[np.nonzero(inDepth)]) - 25
-            maxval = minval + 100
-            np.place(inDepth, inDepth > maxval, 0)
-            np.place(inDepth, inDepth > 0, 1)
+            if inDepth.any() > 0:
+                minval =  np.min(inDepth[np.nonzero(inDepth)])
+                maxval = minval + 100
+                np.place(inDepth, inDepth > maxval, 0)
+                np.place(inDepth, inDepth > 0, 1)
 
 
             #convertion from rgb to hsv
