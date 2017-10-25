@@ -35,8 +35,8 @@ class color_shape_detector:
         self.shapes = {'Triangle' : 3, 'Square' : 4, 'Circle' : 15}
 
         #creating a message filter for synchronizing depth an color info
-        self.image_sub = rospy.Subscriber("/softkinetic_camera/rgb/image_color", Image, self.image_callback)
-        self.depth_sub = rospy.Subscriber("/softkinetic_camera/depth/image_raw", Image, self.main_callback)
+        self.image_sub = rospy.Subscriber("/depthsense/image_raw", Image, self.image_callback)
+        self.depth_sub = rospy.Subscriber("/depthsense/depth_image", Image, self.main_callback)
 
         #creating image kernels for morphological operations
         self.kernel_op = np.ones((2,2),np.uint8)
@@ -53,26 +53,32 @@ class color_shape_detector:
         self.image = inImg_resized
 
     def main_callback(self, ros_depth):
-        ra = rospy.Rate(25) #25hz
+        ra = rospy.Rate(5) #25hz
 
         for color in self.colors:
 
             #depth encoding is "16UC1" rostopic echo /camera/depth/image_raw --noarr shows this encoding
-            inDepth = self.bridge.imgmsg_to_cv2(ros_depth, "16UC1")
+            inDepth = self.bridge.imgmsg_to_cv2(ros_depth, "passthrough")
+	    # crop Depth Image
+	    inDepth_cropped = inDepth[18:260, 33:216]
+            inDepth= cv2.resize(inDepth_cropped, self.image_size, interpolation = cv2.INTER_AREA)
             inImg_filtered = cv2.GaussianBlur(self.image, (3,3),0)
-
             #get a Matrix where 0s are the values not included in the range and 1s the included ones
             if inDepth.any() > 0:
                 minval =  np.min(inDepth[np.nonzero(inDepth)])
-                maxval = minval + 100
+                maxval = minval + 150
                 np.place(inDepth, inDepth > maxval, 0)
                 np.place(inDepth, inDepth > 0, 1)
 
             #convertion from rgb to hsv
             inImg_hsv = cv2.cvtColor(inImg_filtered, cv2.COLOR_BGR2HSV)
+            h,s,v = cv2.split(inImg_hsv)
 
             #apply the depth mask
-            depth_mask_applied = np.multiply(inImg_hsv, inDepth)
+            h_mask_applied = np.multiply(h, inDepth)
+            s_mask_applied = np.multiply(s, inDepth)
+            v_mask_applied = np.multiply(v, inDepth)
+            depth_mask_applied = cv2.merge((h_mask_applied,s_mask_applied,v_mask_applied))
 
             #appliying the color filter
             mask = cv2.inRange(depth_mask_applied,self.colors[color][0], self.colors[color][1])
@@ -111,26 +117,26 @@ class color_shape_detector:
                 if area_ev > 50:
                     self.detected_color = color
                     self.success_color = True
-		elif area_ev < 50 and not self.success_color:
-		    self.detected_color = 'None'
-		for shape in self.shapes:
-		    #appliying the shape filter
-		    if(shape == 'Circle') :
-		        circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,5,param1=20,param2=10,minRadius=5,maxRadius=0)
-		        if circles is not None:
-		            self.detected_shape = shape
-		            self.success_shape = True
-		        elif circles is None and not self.success_shape:
-		            self.detected_shape = 'None'
-		        else :
-		            pass
-		    if len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape]:
-		        self.detected_shape = shape
-		        self.success_shape = True
-		    elif not len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape] and not self.success_shape:
-		        self.detected_shape = 'None'
-		    else:
-		        pass
+                elif area_ev < 50 and not self.success_color:
+                    self.detected_color = 'None'
+                for shape in self.shapes:
+                #appliying the shape filter
+                    if(shape == 'Circle') :
+                        circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,5,param1=20,param2=10,minRadius=5,maxRadius=0)
+                        if circles is not None:
+                            self.detected_shape = shape
+                            self.success_shape = True
+                        elif circles is None and not self.success_shape:
+                            self.detected_shape = 'None'
+                        else :
+                            pass
+                    if len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape]:
+                        self.detected_shape = shape
+                        self.success_shape = True
+                    elif not len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape] and not self.success_shape:
+                        self.detected_shape = 'None'
+                    else:
+                        pass
                 self.success_shape = False
                 cv2.waitKey(1)
                 ra.sleep()
@@ -144,8 +150,8 @@ def  color_detection():
     #ros node defined
     pub = rospy.Publisher('detected_parameters', CreativeCognitionParameters, queue_size = 25)
     rospy.init_node('color_reciever', anonymous = True )
-    r = rospy.Rate(25) #25hz
-    msg = CreativeCognitionParameters()	
+    r = rospy.Rate(5) #5hz
+    msg = CreativeCognitionParameters()
     while not rospy.is_shutdown() :
         print  "Detected " + cd.detected_color + " , " + cd.detected_shape
         msg.Color = cd.detected_color
