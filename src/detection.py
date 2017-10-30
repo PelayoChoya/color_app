@@ -22,10 +22,10 @@ class color_shape_detector:
 
         #creating a filter
         #Position 0 is the lower limit and positon 1 the upper one
-        blue_threshold = np.array([[103,50,50],[130,255,255]])
-        red_threshold = np.array([[169, 100, 100],[189, 255, 255]])
+        blue_threshold = np.array([[102,50,50],[130,255,255]])
+        red_threshold = (np.array([[0, 100, 100],[20, 255, 255]]), np.array([[160, 100, 100],[179, 255, 255]]))
         green_threshold = np.array([[49,50,50],[80, 255, 255]])
-        yellow_threshold = np.array([[25,100,100],[35,255,255]])
+        #yellow_threshold = np.array([[25,100,100],[35,255,255]])
         #black_threshold = np.array([[0,0,0],[230,25,20]])
         #gray_threshold = np.array([[190,45,35],[220,65,55]])
         #orange_threshold = np.array([[15,65,55],[35,85,75]])
@@ -47,7 +47,7 @@ class color_shape_detector:
 
     def image_callback(self, image):
         #convertion from ROS Image format to opencv and filtering
-        inImg = self.bridge.imgmsg_to_cv2(image,"bgr8")
+        inImg = self.bridge.imgmsg_to_cv2(image,"passthrough")
         inImg_resized = cv2.resize(inImg, self.image_size, interpolation = cv2.INTER_AREA)
 
         self.image = inImg_resized
@@ -81,7 +81,15 @@ class color_shape_detector:
             depth_mask_applied = cv2.merge((h_mask_applied,s_mask_applied,v_mask_applied))
 
             #appliying the color filter
-            mask = cv2.inRange(depth_mask_applied,self.colors[color][0], self.colors[color][1])
+	    if (color == 'Red'):
+            	mask1 = cv2.inRange(inImg_hsv,self.colors[color][0][0],
+            	                    self.colors[color][0][1])
+            	mask2 = cv2.inRange(inImg_hsv,self.colors[color][1][0],
+            	                    self.colors[color][1][1])
+            	mask = cv2.bitwise_or(mask1,mask2)
+	    else:
+            	mask = cv2.inRange(depth_mask_applied,self.colors[color][0], self.colors[color][1])
+
             cv2.imshow("mask", mask)
 
 
@@ -117,26 +125,24 @@ class color_shape_detector:
                 if area_ev > 50:
                     self.detected_color = color
                     self.success_color = True
+		    for shape in self.shapes:
+		    #appliying the shape filter
+		        if(shape == 'Circle') :
+		            circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,5,param1=30,param2=10,minRadius=10,maxRadius=0)
+		            if circles is not None:
+		                self.detected_shape = shape
+		                self.success_shape = True
+				break
+		            elif circles is None and not self.success_shape:
+		                self.detected_shape = 'None'
+		        elif len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape]:
+		            self.detected_shape = shape
+		            self.success_shape = True
+			    break
+		        elif not len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape] and not self.success_shape:
+		            self.detected_shape = 'None'
                 elif area_ev < 50 and not self.success_color:
                     self.detected_color = 'None'
-                for shape in self.shapes:
-                #appliying the shape filter
-                    if(shape == 'Circle') :
-                        circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,5,param1=20,param2=10,minRadius=5,maxRadius=0)
-                        if circles is not None:
-                            self.detected_shape = shape
-                            self.success_shape = True
-                        elif circles is None and not self.success_shape:
-                            self.detected_shape = 'None'
-                        else :
-                            pass
-                    if len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape]:
-                        self.detected_shape = shape
-                        self.success_shape = True
-                    elif not len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape] and not self.success_shape:
-                        self.detected_shape = 'None'
-                    else:
-                        pass
                 self.success_shape = False
                 cv2.waitKey(1)
                 ra.sleep()
