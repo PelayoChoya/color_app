@@ -58,7 +58,6 @@ class color_shape_detector:
 
         for color in self.colors:
 
-            #depth encoding is "16UC1" rostopic echo /camera/depth/image_raw --noarr shows this encoding
             inDepth = self.bridge.imgmsg_to_cv2(ros_depth, "passthrough")
 	    # crop Depth Image
 	    inDepth_cropped = inDepth[18:260, 33:216]
@@ -121,7 +120,7 @@ class color_shape_detector:
                 cnt =  contours[biggest_area_index]
                 cv2.drawContours(mask_final, [cnt], -1, 0, -1)
                 cv2.bitwise_not(mask_final,mask_final)
-                cv2.imshow("hue", mask_final)
+                cv2.imshow("Final mask", mask_final)
                 #check if the color filer succeed
                 if area_ev > 50:
                     self.detected_color = color
@@ -130,7 +129,7 @@ class color_shape_detector:
 		    for shape in self.shapes:
 		    #appliying the shape filter
 		        if(shape == 'Circle') :
-		            circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,5,param1=30,param2=10,minRadius=10,maxRadius=0)
+		            circles = cv2.HoughCircles(mask_final,cv2.cv.CV_HOUGH_GRADIENT,1,15,param1=35,param2=15,minRadius=10,maxRadius=0)
 		            if circles is not None:
 		                self.detected_shape = shape
 		                self.success_shape = True
