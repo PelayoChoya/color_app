@@ -19,6 +19,7 @@ class color_shape_detector:
         self.success_shape = False
         self.detected_color = ''
         self.detected_shape = ''
+	self.detection_process_entered = False
 
         #creating a filter
         #Position 0 is the lower limit and positon 1 the upper one
@@ -53,7 +54,7 @@ class color_shape_detector:
         self.image = inImg_resized
 
     def main_callback(self, ros_depth):
-        ra = rospy.Rate(5) #25hz
+        ra = rospy.Rate(5) #5hz
 
         for color in self.colors:
 
@@ -125,6 +126,7 @@ class color_shape_detector:
                 if area_ev > 50:
                     self.detected_color = color
                     self.success_color = True
+		    self.detection_process_entered = True
 		    for shape in self.shapes:
 		    #appliying the shape filter
 		        if(shape == 'Circle') :
@@ -143,6 +145,7 @@ class color_shape_detector:
 		            self.detected_shape = 'None'
                 elif area_ev < 50 and not self.success_color:
                     self.detected_color = 'None'
+		    self.detection_process_entered = False
                 self.success_shape = False
                 cv2.waitKey(1)
                 ra.sleep()
@@ -159,10 +162,11 @@ def  color_detection():
     r = rospy.Rate(5) #5hz
     msg = CreativeCognitionParameters()
     while not rospy.is_shutdown() :
-        print  "Detected " + cd.detected_color + " , " + cd.detected_shape
-        msg.Color = cd.detected_color
-        msg.Shape = cd.detected_shape
-        pub.publish(msg)
+	if  cd.detection_process_entered == True:
+            print  "Detected " + cd.detected_color + " , " + cd.detected_shape
+            msg.Color = cd.detected_color
+            msg.Shape = cd.detected_shape
+            pub.publish(msg)
         r.sleep()
 
     cv2.destroyAllWindows()
