@@ -122,7 +122,7 @@ class color_shape_detector:
                 cv2.bitwise_not(mask_final,mask_final)
                 cv2.imshow("Final mask", mask_final)
                 #check if the color filer succeed
-                if area_ev > 50:
+                if area_ev > 75:
                     self.detected_color = color
                     self.success_color = True
 		    self.detection_process_entered = True
@@ -142,7 +142,7 @@ class color_shape_detector:
 			    break
 		        elif not len(cv2.approxPolyDP(cnt,0.1*cv2.arcLength(cnt,True),True)) == self.shapes[shape] and not self.success_shape:
 		            self.detected_shape = 'None'
-                elif area_ev < 50 and not self.success_color:
+                elif area_ev < 75 and not self.success_color:
                     self.detected_color = 'None'
 		    self.detection_process_entered = False
                 self.success_shape = False
